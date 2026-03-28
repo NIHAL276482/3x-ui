@@ -344,7 +344,6 @@ func (s *Server) startTask() {
 	}
 
 	// Make a traffic condition every day, 8:30
-	var entry cron.EntryID
 	isTgbotenabled, err := s.settingService.GetTgbotEnabled()
 	if (err == nil) && (isTgbotenabled) {
 		runtime, err := s.settingService.GetTgbotRuntime()
@@ -367,8 +366,6 @@ func (s *Server) startTask() {
 		if (err == nil) && (cpuThreshold > 0) {
 			s.cron.AddJob("@every 10s", job.NewCheckCpuJob())
 		}
-	} else {
-		s.cron.Remove(entry)
 	}
 }
 

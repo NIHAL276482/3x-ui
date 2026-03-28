@@ -1454,16 +1454,15 @@ func (s *InboundService) SetClientTelegramUserID(trafficId int, tgId int64) (boo
 		return false, err
 	}
 	clients := settings["clients"].([]any)
-	var newClients []any
 	for client_index := range clients {
 		c := clients[client_index].(map[string]any)
 		if c["email"] == clientEmail {
 			c["tgId"] = tgId
 			c["updated_at"] = time.Now().Unix() * 1000
-			newClients = append(newClients, any(c))
 		}
+		clients[client_index] = any(c)
 	}
-	settings["clients"] = newClients
+	settings["clients"] = clients
 	modifiedSettings, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return false, err
@@ -1541,16 +1540,15 @@ func (s *InboundService) ToggleClientEnableByEmail(clientEmail string) (bool, bo
 		return false, false, err
 	}
 	clients := settings["clients"].([]any)
-	var newClients []any
 	for client_index := range clients {
 		c := clients[client_index].(map[string]any)
 		if c["email"] == clientEmail {
 			c["enable"] = !clientOldEnabled
 			c["updated_at"] = time.Now().Unix() * 1000
-			newClients = append(newClients, any(c))
 		}
+		clients[client_index] = any(c)
 	}
-	settings["clients"] = newClients
+	settings["clients"] = clients
 	modifiedSettings, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return false, false, err
@@ -1621,16 +1619,15 @@ func (s *InboundService) ResetClientIpLimitByEmail(clientEmail string, count int
 		return false, err
 	}
 	clients := settings["clients"].([]any)
-	var newClients []any
 	for client_index := range clients {
 		c := clients[client_index].(map[string]any)
 		if c["email"] == clientEmail {
 			c["limitIp"] = count
 			c["updated_at"] = time.Now().Unix() * 1000
-			newClients = append(newClients, any(c))
 		}
+		clients[client_index] = any(c)
 	}
-	settings["clients"] = newClients
+	settings["clients"] = clients
 	modifiedSettings, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return false, err
@@ -1680,16 +1677,15 @@ func (s *InboundService) ResetClientExpiryTimeByEmail(clientEmail string, expiry
 		return false, err
 	}
 	clients := settings["clients"].([]any)
-	var newClients []any
 	for client_index := range clients {
 		c := clients[client_index].(map[string]any)
 		if c["email"] == clientEmail {
 			c["expiryTime"] = expiry_time
 			c["updated_at"] = time.Now().Unix() * 1000
-			newClients = append(newClients, any(c))
 		}
+		clients[client_index] = any(c)
 	}
-	settings["clients"] = newClients
+	settings["clients"] = clients
 	modifiedSettings, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return false, err
@@ -1742,16 +1738,15 @@ func (s *InboundService) ResetClientTrafficLimitByEmail(clientEmail string, tota
 		return false, err
 	}
 	clients := settings["clients"].([]any)
-	var newClients []any
 	for client_index := range clients {
 		c := clients[client_index].(map[string]any)
 		if c["email"] == clientEmail {
 			c["totalGB"] = totalGB * 1024 * 1024 * 1024
 			c["updated_at"] = time.Now().Unix() * 1000
-			newClients = append(newClients, any(c))
 		}
+		clients[client_index] = any(c)
 	}
-	settings["clients"] = newClients
+	settings["clients"] = clients
 	modifiedSettings, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return false, err
@@ -1908,7 +1903,7 @@ func (s *InboundService) DelDepletedClients(id int) (err error) {
 	// Only consider truly depleted clients: expired OR traffic exhausted
 	now := time.Now().Unix() * 1000
 	depletedClients := []xray.ClientTraffic{}
-	err = db.Model(xray.ClientTraffic{}).
+	err = tx.Model(xray.ClientTraffic{}).
 		Where(whereText+" and ((total > 0 and up + down >= total) or (expiry_time > 0 and expiry_time <= ?))", id, now).
 		Select("inbound_id, GROUP_CONCAT(email) as email").
 		Group("inbound_id").

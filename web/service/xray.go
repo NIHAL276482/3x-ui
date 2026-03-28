@@ -171,12 +171,11 @@ func (s *XrayService) GetXrayConfig() (*xray.Config, error) {
 			// Remove the "settings" field under "tlsSettings" and "realitySettings"
 			tlsSettings, ok1 := stream["tlsSettings"].(map[string]any)
 			realitySettings, ok2 := stream["realitySettings"].(map[string]any)
-			if ok1 || ok2 {
-				if ok1 {
-					delete(tlsSettings, "settings")
-				} else if ok2 {
-					delete(realitySettings, "settings")
-				}
+			if ok1 {
+				delete(tlsSettings, "settings")
+			}
+			if ok2 {
+				delete(realitySettings, "settings")
 			}
 
 			delete(stream, "externalProxy")

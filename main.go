@@ -173,6 +173,7 @@ func showSetting(show bool) {
 		userModel, err := userService.GetFirstUser()
 		if err != nil {
 			fmt.Println("get current user info failed, error info:", err)
+			return
 		}
 
 		if userModel.Username == "" || userModel.Password == "" {
