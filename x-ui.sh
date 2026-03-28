@@ -19,6 +19,10 @@ function LOGI() {
     echo -e "${green}[INF] $* ${plain}"
 }
 
+function LOGW() {
+    echo -e "${yellow}[WRN] $* ${plain}"
+}
+
 # Port helpers: detect listener and owning process (best effort)
 is_port_in_use() {
     local port="$1"
@@ -42,6 +46,11 @@ is_ipv4() {
 }
 is_ipv6() {
     [[ "$1" =~ : ]] && return 0 || return 1
+}
+
+# Strict IPv6 format validator (used for certificate/domain validation)
+is_ipv6_strict() {
+    [[ "$1" =~ ^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$ ]] && return 0 || return 1
 }
 is_ip() {
     is_ipv4 "$1" || is_ipv6 "$1"
@@ -108,7 +117,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/MHSanaei/3x-ui/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -127,7 +136,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/MHSanaei/3x-ui/main/update.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/update.sh)
     if [[ $? == 0 ]]; then
         LOGI "Update is complete, Panel has automatically restarted "
         before_show_menu
@@ -145,11 +154,12 @@ update_menu() {
         return 0
     fi
 
-    curl -fLRo /usr/bin/x-ui https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.sh
+    curl -fLRo /usr/bin/x-ui https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/x-ui.sh
+    local curl_exit=$?
     chmod +x ${xui_folder}/x-ui.sh
     chmod +x /usr/bin/x-ui
 
-    if [[ $? == 0 ]]; then
+    if [[ $curl_exit == 0 ]]; then
         echo -e "${green}Update successful. The panel has automatically restarted.${plain}"
         exit 0
     else
@@ -167,7 +177,7 @@ legacy_version() {
         exit 1
     fi
     # Use the entered panel version in the download link
-    install_command="bash <(curl -Ls "https://raw.githubusercontent.com/mhsanaei/3x-ui/v$tag_version/install.sh") v$tag_version"
+    install_command="bash <(curl -Ls "https://raw.githubusercontent.com/NIHAL276482/3x-ui/v$tag_version/install.sh") v$tag_version"
 
     echo "Downloading and installing panel version $tag_version..."
     eval $install_command
@@ -206,7 +216,7 @@ uninstall() {
     echo ""
     echo -e "Uninstalled Successfully.\n"
     echo "If you need to install this panel again, you can use below command:"
-    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)${plain}"
+    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
     trap delete_script SIGTERM
@@ -250,8 +260,8 @@ gen_random_string() {
 reset_webbasepath() {
     echo -e "${yellow}Resetting Web Base Path${plain}"
 
-    read -rp "Are you sure you want to reset the web base path? (y/n): " confirm
-    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+    read -rp "Are you sure you want to reset the web base path? (y/n): " confirm_reset
+    if [[ $confirm_reset != "y" && $confirm_reset != "Y" ]]; then
         echo -e "${yellow}Operation canceled.${plain}"
         return
     fi
@@ -603,7 +613,7 @@ enable_bbr() {
 }
 
 update_shell() {
-    curl -fLRo /usr/bin/x-ui -z /usr/bin/x-ui https://github.com/MHSanaei/3x-ui/raw/main/x-ui.sh
+    curl -fLRo /usr/bin/x-ui -z /usr/bin/x-ui https://github.com/NIHAL276482/3x-ui/raw/main/x-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "Failed to download script, Please check whether the machine can connect Github"
@@ -712,8 +722,8 @@ show_enable_status() {
 }
 
 check_xray_status() {
-    count=$(ps -ef | grep "xray-linux" | grep -v "grep" | wc -l)
-    if [[ count -ne 0 ]]; then
+    local count=$(ps -ef | grep "xray-linux" | grep -v "grep" | wc -l)
+    if [[ $count -ne 0 ]]; then
         return 0
     else
         return 1
@@ -1408,7 +1418,7 @@ ssl_cert_issue() {
         rm -rf ~/.acme.sh/${domain}
         exit 1
     else
-        LOGE "Issuing certificate succeeded, installing certificates..."
+        LOGI "Issuing certificate succeeded, installing certificates..."
     fi
 
     reloadCmd="x-ui restart"
@@ -1454,13 +1464,13 @@ ssl_cert_issue() {
     ~/.acme.sh/acme.sh --upgrade --auto-upgrade
     if [ $? -ne 0 ]; then
         LOGE "Auto renew failed, certificate details:"
-        ls -lah cert/*
+        ls -lah ${certPath}/
         chmod 600 $certPath/privkey.pem
         chmod 644 $certPath/fullchain.pem
         exit 1
     else
         LOGI "Auto renew succeeded, certificate details:"
-        ls -lah cert/*
+        ls -lah ${certPath}/
         chmod 600 $certPath/privkey.pem
         chmod 644 $certPath/fullchain.pem
     fi
@@ -2164,7 +2174,7 @@ show_usage() {
 │  ${blue}x-ui start${plain}                 - Start                            │
 │  ${blue}x-ui stop${plain}                  - Stop                             │
 │  ${blue}x-ui restart${plain}               - Restart                          │
-|  ${blue}x-ui restart-xray${plain}          - Restart Xray                     │
+│  ${blue}x-ui restart-xray${plain}          - Restart Xray                     │
 │  ${blue}x-ui status${plain}                - Current Status                   │
 │  ${blue}x-ui settings${plain}              - Current Settings                 │
 │  ${blue}x-ui enable${plain}                - Enable Autostart on OS Startup   │
@@ -2200,7 +2210,7 @@ show_menu() {
 │  ${green}11.${plain} Start                                     │
 │  ${green}12.${plain} Stop                                      │
 │  ${green}13.${plain} Restart                                   │
-|  ${green}14.${plain} Restart Xray                              │
+│  ${green}14.${plain} Restart Xray                              │
 │  ${green}15.${plain} Check Status                              │
 │  ${green}16.${plain} Logs Management                           │
 │────────────────────────────────────────────────│
