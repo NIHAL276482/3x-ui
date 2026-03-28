@@ -47,6 +47,11 @@ is_ipv4() {
 is_ipv6() {
     [[ "$1" =~ : ]] && return 0 || return 1
 }
+
+# Strict IPv6 format validator (used for certificate/domain validation)
+is_ipv6_strict() {
+    [[ "$1" =~ ^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$ ]] && return 0 || return 1
+}
 is_ip() {
     is_ipv4 "$1" || is_ipv6 "$1"
 }
@@ -150,10 +155,11 @@ update_menu() {
     fi
 
     curl -fLRo /usr/bin/x-ui https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/x-ui.sh
+    local curl_exit=$?
     chmod +x ${xui_folder}/x-ui.sh
     chmod +x /usr/bin/x-ui
 
-    if [[ $? == 0 ]]; then
+    if [[ $curl_exit == 0 ]]; then
         echo -e "${green}Update successful. The panel has automatically restarted.${plain}"
         exit 0
     else
@@ -254,8 +260,8 @@ gen_random_string() {
 reset_webbasepath() {
     echo -e "${yellow}Resetting Web Base Path${plain}"
 
-    read -rp "Are you sure you want to reset the web base path? (y/n): " confirm
-    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+    read -rp "Are you sure you want to reset the web base path? (y/n): " confirm_reset
+    if [[ $confirm_reset != "y" && $confirm_reset != "Y" ]]; then
         echo -e "${yellow}Operation canceled.${plain}"
         return
     fi
@@ -716,8 +722,8 @@ show_enable_status() {
 }
 
 check_xray_status() {
-    count=$(ps -ef | grep "xray-linux" | grep -v "grep" | wc -l)
-    if [[ count -ne 0 ]]; then
+    local count=$(ps -ef | grep "xray-linux" | grep -v "grep" | wc -l)
+    if [[ $count -ne 0 ]]; then
         return 0
     else
         return 1
@@ -1412,7 +1418,7 @@ ssl_cert_issue() {
         rm -rf ~/.acme.sh/${domain}
         exit 1
     else
-        LOGE "Issuing certificate succeeded, installing certificates..."
+        LOGI "Issuing certificate succeeded, installing certificates..."
     fi
 
     reloadCmd="x-ui restart"
@@ -1458,13 +1464,13 @@ ssl_cert_issue() {
     ~/.acme.sh/acme.sh --upgrade --auto-upgrade
     if [ $? -ne 0 ]; then
         LOGE "Auto renew failed, certificate details:"
-        ls -lah cert/*
+        ls -lah ${certPath}/
         chmod 600 $certPath/privkey.pem
         chmod 644 $certPath/fullchain.pem
         exit 1
     else
         LOGI "Auto renew succeeded, certificate details:"
-        ls -lah cert/*
+        ls -lah ${certPath}/
         chmod 600 $certPath/privkey.pem
         chmod 644 $certPath/fullchain.pem
     fi

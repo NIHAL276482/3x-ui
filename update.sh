@@ -74,6 +74,11 @@ is_ipv4() {
 is_ipv6() {
     [[ "$1" =~ : ]] && return 0 || return 1
 }
+
+# Strict IPv6 format validator (used for certificate/domain validation)
+is_ipv6_strict() {
+    [[ "$1" =~ ^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$ ]] && return 0 || return 1
+}
 is_ip() {
     is_ipv4 "$1" || is_ipv6 "$1"
 }
@@ -799,15 +804,9 @@ update_x-ui() {
             fi
         fi
         echo -e "${green}Removing old x-ui version...${plain}"
-        rm ${xui_folder} -f >/dev/null 2>&1
-        rm ${xui_folder}/x-ui.service -f >/dev/null 2>&1
-        rm ${xui_folder}/x-ui.service.debian -f >/dev/null 2>&1
-        rm ${xui_folder}/x-ui.service.arch -f >/dev/null 2>&1
-        rm ${xui_folder}/x-ui.service.rhel -f >/dev/null 2>&1
-        rm ${xui_folder}/x-ui -f >/dev/null 2>&1
-        rm ${xui_folder}/x-ui.sh -f >/dev/null 2>&1
+        rm -rf ${xui_folder} >/dev/null 2>&1
         echo -e "${green}Removing old xray version...${plain}"
-        rm ${xui_folder}/bin/xray-linux-amd64 -f >/dev/null 2>&1
+        rm -f ${xui_folder}/bin/xray-linux-* >/dev/null 2>&1
         echo -e "${green}Removing old README and LICENSE file...${plain}"
         rm ${xui_folder}/bin/README.md -f >/dev/null 2>&1
         rm ${xui_folder}/bin/LICENSE -f >/dev/null 2>&1
@@ -826,9 +825,10 @@ update_x-ui() {
     if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
         mv bin/xray-linux-$(arch) bin/xray-linux-arm >/dev/null 2>&1
         chmod +x bin/xray-linux-arm >/dev/null 2>&1
+    else
+        chmod +x bin/xray-linux-$(arch) >/dev/null 2>&1
     fi
-    
-    chmod +x x-ui bin/xray-linux-$(arch) >/dev/null 2>&1
+    chmod +x x-ui >/dev/null 2>&1
     
     echo -e "${green}Downloading and installing x-ui.sh script...${plain}"
     ${curl_bin} -fLRo /usr/bin/x-ui https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/x-ui.sh >/dev/null 2>&1
