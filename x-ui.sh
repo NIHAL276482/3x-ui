@@ -19,6 +19,10 @@ function LOGI() {
     echo -e "${green}[INF] $* ${plain}"
 }
 
+function LOGW() {
+    echo -e "${yellow}[WRN] $* ${plain}"
+}
+
 # Port helpers: detect listener and owning process (best effort)
 is_port_in_use() {
     local port="$1"
@@ -167,7 +171,7 @@ legacy_version() {
         exit 1
     fi
     # Use the entered panel version in the download link
-    install_command="bash <(curl -Ls "https://raw.githubusercontent.com/mhsanaei/3x-ui/v$tag_version/install.sh") v$tag_version"
+    install_command="bash <(curl -Ls "https://raw.githubusercontent.com/NIHAL276482/3x-ui/v$tag_version/install.sh") v$tag_version"
 
     echo "Downloading and installing panel version $tag_version..."
     eval $install_command
@@ -206,7 +210,7 @@ uninstall() {
     echo ""
     echo -e "Uninstalled Successfully.\n"
     echo "If you need to install this panel again, you can use below command:"
-    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)${plain}"
+    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/NIHAL276482/3x-ui/main/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
     trap delete_script SIGTERM
@@ -2164,7 +2168,7 @@ show_usage() {
 │  ${blue}x-ui start${plain}                 - Start                            │
 │  ${blue}x-ui stop${plain}                  - Stop                             │
 │  ${blue}x-ui restart${plain}               - Restart                          │
-|  ${blue}x-ui restart-xray${plain}          - Restart Xray                     │
+│  ${blue}x-ui restart-xray${plain}          - Restart Xray                     │
 │  ${blue}x-ui status${plain}                - Current Status                   │
 │  ${blue}x-ui settings${plain}              - Current Settings                 │
 │  ${blue}x-ui enable${plain}                - Enable Autostart on OS Startup   │
@@ -2200,7 +2204,7 @@ show_menu() {
 │  ${green}11.${plain} Start                                     │
 │  ${green}12.${plain} Stop                                      │
 │  ${green}13.${plain} Restart                                   │
-|  ${green}14.${plain} Restart Xray                              │
+│  ${green}14.${plain} Restart Xray                              │
 │  ${green}15.${plain} Check Status                              │
 │  ${green}16.${plain} Logs Management                           │
 │────────────────────────────────────────────────│
